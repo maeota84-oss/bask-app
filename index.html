@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bask（仮）— 今日も、だいじょうぶ。</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#3E7C4F">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Bask">
+<style>
+  :root{
+    --page:#DCD5C7; --bg:#F6F2EA; --card:#FFFFFF; --ink:#28241D; --sub:#6E6759;
+    --green:#1F7A46; --green-bg:#DFF2E5;
+    --yellow:#96690A; --yellow-bg:#FAEECC;
+    --red:#C03B37; --red-bg:#FADDDB;
+    --accent:#2F7A48; --line:#E5DED0; --chip:#FBF8F1; --track:#EEE8DB; --soft:#F2EDE2;
+    --info:#3B5FA0; --info-bg:#EAF0FA;
+    --ctl:#C2B9A6; --btn-edge:rgba(93,82,60,.24);
+    --shadow:0 1px 4px rgba(60,50,30,.07);
+    --radius:16px;
+  }
+  /* プラネットモード=④トライカラーMIX: 紫紺の宇宙×ピンク/紫/青。純黒回避・コントラスト確保はそのまま */
+  :root[data-theme="dark"]{
+    --page:#07051A; --bg:#0E0A22; --card:#191340; --ink:#EDEBFA; --sub:#A5A3C9;
+    --green:#63E6A5; --green-bg:#143026;
+    --yellow:#FFD479; --yellow-bg:#3A3016;
+    --red:#FF8F87; --red-bg:#401D26;
+    --accent:#F472B6; --line:#312762; --chip:#221A50; --track:#2A2158; --soft:#221A50;
+    --info:#A5C4F5; --info-bg:#1E2A52;
+    --ctl:#544787; --btn-edge:rgba(0,0,0,.6);
+    --shadow:0 1px 6px rgba(0,0,0,.5);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{background:var(--page);font-family:"Hiragino Kaku Gothic ProN","Yu Gothic UI","Meiryo",sans-serif;color:var(--ink);}
+  button{font-family:inherit;touch-action:manipulation;user-select:none;-webkit-user-select:none;}
+  button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .phone{max-width:430px;margin:0 auto;min-height:100vh;background:var(--bg);padding-bottom:92px;position:relative;box-shadow:0 0 40px rgba(0,0,0,.18);}
+  :root[data-theme="dark"] .phone{box-shadow:0 0 40px rgba(0,0,0,.6);}
+  header{padding:14px 14px 10px;display:flex;align-items:center;gap:8px;}
+  header .logo{font-size:22px;font-weight:800;letter-spacing:.5px;color:var(--accent);}
+  header .tagline{font-size:11.5px;color:var(--sub);}
+  header .kari{font-size:10px;color:var(--bg);background:var(--sub);border-radius:8px;padding:2px 6px;margin-left:auto;}
+  .theme-btn{border:1px solid var(--line);background:var(--chip);border-radius:50%;width:46px;height:46px;padding:0;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 0 var(--btn-edge);transition:transform .06s,box-shadow .06s;}
+  .theme-btn:active{transform:translateY(2px);box-shadow:0 0 0 var(--btn-edge);}
+  .theme-btn svg{display:block;width:38px;height:38px;overflow:visible;}
+  .theme-btn .half-day,.theme-btn .half-night{transition:opacity .25s,filter .25s;}
+  .theme-btn .half-day{filter:drop-shadow(0 0 3px rgba(255,179,0,.55));}
+  .theme-btn .half-night{opacity:.45;filter:saturate(.6);}
+  :root[data-theme="dark"] .theme-btn .half-night{opacity:1;filter:drop-shadow(0 0 4px rgba(143,184,242,.8));}
+  :root[data-theme="dark"] .theme-btn .half-day{opacity:.4;filter:saturate(.5);}
+  .theme-btn .cycle{stroke:var(--accent);transform-origin:24px 24px;transition:transform .5s cubic-bezier(.25,.8,.3,1.15);}
+  .theme-btn.spin .cycle{transform:rotate(180deg);}
+  .theme-btn .ah{fill:var(--accent);}
+  :root[data-theme="dark"] .theme-btn .cycle{filter:drop-shadow(0 0 3px rgba(167,139,250,.8));}
+
+  .season{margin:0 14px 12px;background:var(--yellow-bg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:12.5px;line-height:1.6;color:var(--ink);display:flex;gap:8px;align-items:flex-start;}
+  .season b{display:block;font-size:11.5px;color:var(--yellow);}
+
+  .section-title{font-size:13px;font-weight:700;color:var(--sub);margin:18px 18px 8px;display:flex;align-items:center;justify-content:space-between;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);margin:0 14px 12px;padding:14px;box-shadow:var(--shadow);}
+
+  /* pet card */
+  .pet-card{display:flex;gap:12px;align-items:center;cursor:pointer;border-radius:12px;transition:background .1s;}
+  .pet-card:active{background:var(--soft);}
+  .pet-card:active .card-arw{transform:translateX(3px);}
+  .card-arw{font-size:26px;color:var(--sub);opacity:.65;flex-shrink:0;transition:transform .1s;padding-left:2px;}
+  .meter{position:relative;width:92px;height:92px;flex-shrink:0;}
+  .meter svg{transform:rotate(-90deg);}
+  .meter .center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .meter .center .days{font-size:19px;font-weight:800;line-height:1;}
+  .meter .center .lbl{font-size:10px;color:var(--sub);margin-top:2px;}
+  .pet-info{flex:1;min-width:0;}
+  .pet-name{font-size:17px;font-weight:800;display:flex;align-items:center;gap:6px;}
+  .pet-species{font-size:12px;color:var(--sub);margin:2px 0 6px;}
+  .status-chip{display:inline-block;font-size:12px;font-weight:700;padding:5px 11px;border-radius:20px;line-height:1.3;}
+  .z-green{color:var(--green);background:var(--green-bg);}
+  .z-yellow{color:var(--yellow);background:var(--yellow-bg);}
+  .z-red{color:var(--red);background:var(--red-bg);}
+  .quick{display:flex;gap:6px;margin-top:12px;}
+  .quick button{flex:1;min-height:48px;border:1px solid var(--line);background:var(--chip);border-radius:12px;padding:8px 0 6px;font-size:16px;cursor:pointer;line-height:1;box-shadow:0 2px 0 var(--btn-edge);transition:transform .06s,box-shadow .06s,background .06s;}
+  .quick button span{display:block;font-size:11px;font-weight:700;color:var(--sub);margin-top:4px;}
+  .quick button:active{transform:translateY(2px);box-shadow:0 0 0 var(--btn-edge);background:var(--green-bg);}
+
+  /* feed stock */
+  .stock-row{display:flex;align-items:center;gap:12px;}
+  .stock-icon{font-size:26px;}
+  .stock-main{flex:1;}
+  .stock-main b{font-size:13.5px;}
+  .stock-bar{height:8px;background:var(--track);border-radius:6px;margin-top:6px;overflow:hidden;}
+  .stock-bar i{display:block;height:100%;border-radius:6px;background:var(--yellow);}
+  .stock-days{font-size:12.5px;color:var(--yellow);font-weight:700;}
+  .pr-btn{border:none;background:var(--accent);color:#fff;border-radius:12px;padding:12px 14px;min-height:44px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 0 var(--btn-edge);transition:transform .06s,box-shadow .06s;}
+  .pr-btn:active{transform:translateY(2px);box-shadow:0 0 0 var(--btn-edge);}
+  .pr-note{font-size:10.5px;color:var(--sub);text-align:right;margin-top:4px;}
+
+  /* add pet */
+  .add-pet{margin:0 14px 12px;width:calc(100% - 28px);min-height:52px;border:2px dashed var(--ctl);background:none;border-radius:var(--radius);padding:14px;font-size:14px;color:var(--sub);cursor:pointer;font-weight:700;transition:background .1s;}
+  .add-pet:active{background:var(--chip);}
+
+  /* bottom nav */
+  nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--card);border-top:1px solid var(--line);display:flex;gap:6px;padding:6px 10px 8px;z-index:50;}
+  nav button{flex:1;min-height:54px;border:none;background:none;border-radius:12px;padding:8px 0 6px;font-size:20px;cursor:pointer;color:var(--sub);transition:background .1s;}
+  nav button span{display:block;font-size:10.5px;margin-top:2px;font-weight:700;}
+  nav button.on{color:var(--accent);background:var(--green-bg);}
+  nav button:active{background:var(--chip);}
+
+  /* modal */
+  .overlay{position:fixed;inset:0;background:rgba(15,12,6,.55);z-index:100;display:none;align-items:flex-end;justify-content:center;}
+  :root[data-theme="dark"] .overlay{background:rgba(0,0,0,.68);}
+  .overlay.show{display:flex;}
+  .sheet{background:var(--bg);width:100%;max-width:430px;max-height:92vh;overflow-y:auto;border-radius:20px 20px 0 0;padding-bottom:30px;animation:up .2s ease;}
+  @keyframes up{from{transform:translateY(40px);opacity:.5}to{transform:translateY(0);opacity:1}}
+  .sheet-head{position:sticky;top:0;background:var(--bg);display:flex;align-items:center;padding:14px 16px 10px;z-index:5;}
+  .sheet-head b{font-size:16.5px;}
+  .sheet-head .x{margin-left:auto;border:1px solid var(--line);background:var(--chip);border-radius:50%;width:40px;height:40px;font-size:16px;cursor:pointer;color:var(--sub);box-shadow:0 2px 0 var(--btn-edge);transition:transform .06s,box-shadow .06s;}
+  .sheet-head .x:active{transform:translateY(2px);box-shadow:0 0 0 var(--btn-edge);}
+
+  .big-meter{display:flex;flex-direction:column;align-items:center;padding:6px 0 0;}
+  .zone-legend{display:flex;gap:10px;margin:10px 0 0;font-size:11px;color:var(--sub);}
+  .zone-legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:3px;}
+  .status-big{margin:12px 16px 0;padding:13px;border-radius:12px;font-size:13.5px;line-height:1.7;}
+
+  .minna-box{margin:12px 16px 0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px;font-size:12.5px;line-height:1.75;}
+  .minna-box b{color:var(--accent);}
+  .minna-tag{font-size:9.5px;color:#fff;background:var(--accent);padding:2px 7px;border-radius:6px;margin-left:4px;vertical-align:middle;}
+
+  .detail-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:12px 16px 0;}
+  .detail-actions button{min-height:52px;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:12px 8px;font-size:13px;font-weight:700;cursor:pointer;color:var(--ink);box-shadow:0 2px 0 var(--btn-edge);transition:transform .06s,box-shadow .06s;}
+  .detail-actions button:active{transform:translateY(2px);box-shadow:0 0 0 var(--btn-edge);}
+  .detail-actions button.primary{background:var(--accent);color:#fff;border:none;}
+
+  .chart-wrap{margin:12px 16px 0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;}
+  .chart-wrap h4, .shed-wrap h4{font-size:12.5px;color:var(--sub);margin-bottom:6px;}
+  .chart-meta{font-size:12px;color:var(--sub);margin-top:6px;line-height:1.6;}
+  .shed-wrap{margin:12px 16px 0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:12.5px;line-height:1.75;}
+  .shed-badge{display:inline-block;background:var(--info-bg);color:var(--info);font-weight:700;padding:4px 9px;border-radius:8px;font-size:11.5px;}
+
+  .care-list{margin:12px 16px 0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;}
+  .care-list h4{font-size:13.5px;color:var(--red);margin-bottom:8px;}
+  .care-item{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px dashed var(--line);font-size:12.5px;line-height:1.6;cursor:pointer;}
+  .care-item:active{background:var(--soft);}
+  .care-item:last-child{border-bottom:none;}
+  .care-item .cb{width:22px;height:22px;border:2px solid var(--ctl);border-radius:6px;flex-shrink:0;margin-top:0;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;transition:background .1s;}
+  .care-item.done .cb{background:var(--green);border-color:var(--green);color:var(--card);}
+  .care-item.done{color:var(--sub);text-decoration:line-through;}
+
+  .hist{margin:12px 16px 0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;}
+  .hist h4{font-size:12.5px;color:var(--sub);margin-bottom:6px;}
+  .hist-row{display:flex;gap:8px;font-size:12.5px;padding:6px 0;border-bottom:1px dashed var(--line);}
+  .hist-row:last-child{border:none;}
+  .hist-row .d{color:var(--sub);width:56px;flex-shrink:0;}
+
+  /* vet pass */
+  .vet-card{margin:12px 16px 0;background:var(--card);border-radius:12px;overflow:hidden;border:2px solid var(--accent);}
+  .vet-card .vc-head{background:var(--accent);color:#fff;padding:11px 14px;font-size:13.5px;font-weight:800;}
+  .vet-card table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  .vet-card td{padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6;}
+  .vet-card td:first-child{color:var(--sub);width:96px;}
+  .vet-card b.up{color:var(--green);}
+  .disclaimer{margin:10px 16px 0;font-size:11px;color:var(--sub);line-height:1.7;}
+
+  /* handover card */
+  .ho-card{margin:12px 16px 0;background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:16px;}
+  .ho-card h3{font-size:16px;display:flex;align-items:center;gap:8px;}
+  .ho-item{display:flex;gap:9px;font-size:12.5px;line-height:1.75;padding:8px 0;border-bottom:1px dashed var(--line);}
+  .ho-item:last-child{border:none;}
+  .ho-item .ic{flex-shrink:0;}
+  .qr{width:96px;height:96px;margin:12px auto 4px;display:grid;grid-template-columns:repeat(17,1fr);grid-template-rows:repeat(17,1fr);background:#fff;padding:6px;border:1px solid var(--line);border-radius:8px;}
+  .qr i{background:#28241D;}
+  .qr-note{text-align:center;font-size:11px;color:var(--sub);}
+  .trip-judge{margin:12px 16px 0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:12.5px;}
+  .trip-judge .row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  .trip-judge input{width:72px;padding:10px;border:1px solid var(--ctl);background:var(--chip);color:var(--ink);border-radius:10px;font-size:16px;text-align:center;}
+  .trip-result{border-radius:10px;padding:11px;line-height:1.75;}
+
+  /* blackout */
+  .blackout .sheet{background:#17150F;color:#F5EFE2;}
+  .blackout .sheet-head{background:#17150F;}
+  .blackout .sheet-head b{color:#FFD666;}
+  .blackout .sheet-head .x{background:#2E2A20;color:#F5EFE2;}
+  .bo-step{margin:10px 16px 0;background:#211E15;border-radius:12px;padding:12px;font-size:13px;line-height:1.8;}
+  .bo-step b{color:#FFD666;display:block;font-size:12px;margin-bottom:2px;}
+  .bo-offline{margin:0 16px;font-size:10px;color:#B7AE97;display:flex;align-items:center;gap:6px;}
+  .bo-quote{margin:10px 16px 0;border-left:3px solid #FFD666;padding:2px 10px;font-size:11px;color:#CFC5AC;line-height:1.7;}
+
+  /* growth / share card */
+  .share-card{margin:12px 16px 0;border-radius:16px;padding:22px 18px;background:linear-gradient(140deg,#2E5D42,#3E7C4F 55%,#7BA05B);color:#fff;position:relative;overflow:hidden;}
+  .share-card .em{font-size:42px;}
+  .share-card h3{font-size:20px;margin:6px 0 2px;}
+  .share-card p{font-size:12px;opacity:.9;}
+  .share-card .wm{position:absolute;right:12px;bottom:10px;font-size:10.5px;opacity:.8;font-weight:700;}
+  .ghost-demo{margin:12px 16px 0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center;}
+  .ghost-demo .frame{position:relative;height:110px;background:var(--soft);border-radius:10px;overflow:hidden;margin-bottom:8px;}
+  .ghost-demo .g1{position:absolute;left:22%;bottom:8px;font-size:34px;opacity:.25;}
+  .ghost-demo .g2{position:absolute;right:22%;bottom:8px;font-size:56px;}
+  .ghost-demo p{font-size:11.5px;color:var(--sub);line-height:1.7;}
+
+  /* minna tab */
+  .compare-card{margin:0 14px 12px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);}
+  .compare-card h3{font-size:14.5px;margin-bottom:8px;}
+  .cmp-row{margin:10px 0 4px;}
+  .cmp-row .lbl{display:flex;justify-content:space-between;font-size:11.5px;color:var(--sub);margin-bottom:4px;}
+  .cmp-bar{position:relative;height:28px;background:linear-gradient(90deg,var(--yellow-bg),var(--green-bg) 30%,var(--green-bg) 70%,var(--yellow-bg));border-radius:8px;}
+  .cmp-bar .me{position:absolute;top:-3px;transform:translateX(-50%);font-size:21px;}
+  .cmp-bar .avg{position:absolute;top:0;bottom:0;width:2px;background:var(--accent);left:50%;}
+  .cmp-note{font-size:11.5px;color:var(--sub);margin-top:8px;line-height:1.75;}
+  .feed-post{display:flex;gap:10px;padding:11px 0;border-bottom:1px dashed var(--line);align-items:flex-start;}
+  .feed-post:last-child{border:none;}
+  .feed-post .av{font-size:26px;}
+  .feed-post .bd{flex:1;font-size:12.5px;line-height:1.65;}
+  .feed-post .nm{font-weight:700;font-size:11.5px;}
+  .feed-post .like{border:1px solid var(--line);background:var(--chip);border-radius:18px;padding:9px 13px;min-height:40px;font-size:12.5px;cursor:pointer;color:var(--red);font-weight:700;box-shadow:0 2px 0 var(--btn-edge);transition:transform .06s,box-shadow .06s;}
+  .feed-post .like:active{transform:translateY(2px);box-shadow:0 0 0 var(--btn-edge);}
+  .no-comment{font-size:11.5px;color:var(--sub);background:var(--soft);border-radius:8px;padding:9px 11px;margin-top:10px;line-height:1.7;}
+
+  /* more tab */
+  .more-item{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);margin:0 14px 9px;border-radius:12px;padding:14px;min-height:56px;cursor:pointer;font-size:13.5px;font-weight:700;box-shadow:0 2px 0 var(--btn-edge);transition:transform .06s,box-shadow .06s;}
+  .more-item:active{transform:translateY(2px);box-shadow:0 0 0 var(--btn-edge);}
+  .more-item .ic{font-size:20px;width:26px;text-align:center;}
+  .more-item .sub{display:block;font-size:11px;color:var(--sub);font-weight:400;margin-top:2px;}
+  .more-item .arw{margin-left:auto;color:var(--sub);opacity:.6;font-size:20px;}
+
+  /* pro */
+  .pro-hero{margin:12px 16px 0;background:linear-gradient(140deg,#3E7C4F,#2E5D42);border-radius:16px;padding:20px 18px;color:#fff;}
+  .pro-hero h3{font-size:18px;}
+  .pro-hero .price{font-size:26px;font-weight:800;margin:6px 0;}
+  .pro-hero .price small{font-size:12px;font-weight:400;}
+  .pro-feat{margin:12px 16px 0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 14px;}
+  .pro-feat div{display:flex;gap:9px;font-size:13px;padding:10px 0;border-bottom:1px dashed var(--line);line-height:1.55;}
+  .pro-feat div:last-child{border:none;}
+  .pro-cta{margin:14px 16px 0;width:calc(100% - 32px);min-height:54px;border:none;background:var(--accent);color:#fff;font-size:15.5px;font-weight:800;border-radius:14px;padding:15px;cursor:pointer;box-shadow:0 3px 0 var(--btn-edge);transition:transform .06s,box-shadow .06s;}
+  .pro-cta:active{transform:translateY(3px);box-shadow:0 0 0 var(--btn-edge);}
+
+  /* weight modal */
+  .w-input{margin:12px 16px 0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;gap:10px;align-items:center;}
+  .w-input input{flex:1;min-width:0;padding:12px;font-size:22px;border:1px solid var(--ctl);background:var(--chip);color:var(--ink);border-radius:10px;text-align:center;}
+  .w-input button{border:none;background:var(--accent);color:#fff;border-radius:12px;padding:14px 20px;min-height:52px;font-size:14.5px;font-weight:700;cursor:pointer;box-shadow:0 2px 0 var(--btn-edge);transition:transform .06s,box-shadow .06s;}
+  .w-input button:active{transform:translateY(2px);box-shadow:0 0 0 var(--btn-edge);}
+
+  .hosp{margin:0 16px 8px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 14px;font-size:12.5px;}
+  .hosp b{display:block;font-size:13.5px;}
+  .hosp span{color:var(--sub);font-size:11.5px;}
+
+  #toast{position:fixed;bottom:104px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);font-size:13.5px;font-weight:700;padding:12px 20px;border-radius:24px;opacity:0;transition:opacity .25s;z-index:200;pointer-events:none;max-width:86%;text-align:center;box-shadow:var(--shadow);}
+  #toast.show{opacity:1;}
+  .demo-note{text-align:center;font-size:10.5px;color:var(--sub);padding:10px 20px 0;line-height:1.7;}
+
+  /* ===== プラネットモードの演出（ダーク時のみ） ===== */
+  .phone > *{position:relative;z-index:1;}
+  .stars{display:none;}
+  :root[data-theme="dark"] .stars{
+    display:block;position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;
+    background:
+      radial-gradient(640px 420px at 85% -5%, rgba(255,95,168,.13), transparent 60%),
+      radial-gradient(520px 400px at 8% 22%, rgba(167,139,250,.13), transparent 62%),
+      radial-gradient(460px 380px at 90% 62%, rgba(56,189,248,.13), transparent 60%);
+  }
+  :root[data-theme="dark"] .stars::before, :root[data-theme="dark"] .stars::after{
+    content:"";position:absolute;top:0;left:0;width:2px;height:2px;border-radius:50%;
+  }
+  :root[data-theme="dark"] .stars::before{
+    box-shadow:26px 84px 0 0 rgba(226,232,250,.5),58px 190px 0 0 rgba(226,232,250,.4),96px 52px 0 0 rgba(226,232,250,.55),128px 260px 0 0 rgba(226,232,250,.35),170px 130px 0 0 rgba(226,232,250,.5),210px 40px 0 0 rgba(226,232,250,.45),236px 210px 0 0 rgba(226,232,250,.4),270px 90px 0 0 rgba(226,232,250,.55),300px 180px 0 0 rgba(226,232,250,.4),342px 66px 0 0 rgba(226,232,250,.5),378px 150px 0 0 rgba(226,232,250,.45),402px 240px 0 0 rgba(226,232,250,.35),36px 340px 0 0 rgba(226,232,250,.45),88px 420px 0 0 rgba(226,232,250,.5),142px 380px 0 0 rgba(226,232,250,.35),196px 470px 0 0 rgba(226,232,250,.5),250px 350px 0 0 rgba(226,232,250,.4),310px 430px 0 0 rgba(226,232,250,.5),366px 390px 0 0 rgba(226,232,250,.4),410px 330px 0 0 rgba(226,232,250,.45),50px 560px 0 0 rgba(226,232,250,.4),120px 620px 0 0 rgba(226,232,250,.5),180px 540px 0 0 rgba(226,232,250,.35),240px 600px 0 0 rgba(226,232,250,.45),298px 520px 0 0 rgba(226,232,250,.5),352px 640px 0 0 rgba(226,232,250,.4),400px 560px 0 0 rgba(226,232,250,.35),70px 760px 0 0 rgba(226,232,250,.45),150px 820px 0 0 rgba(226,232,250,.4),230px 740px 0 0 rgba(226,232,250,.5),312px 800px 0 0 rgba(226,232,250,.4),390px 720px 0 0 rgba(226,232,250,.45),100px 950px 0 0 rgba(226,232,250,.4),260px 900px 0 0 rgba(226,232,250,.5),360px 980px 0 0 rgba(226,232,250,.35),180px 1080px 0 0 rgba(226,232,250,.45),60px 1150px 0 0 rgba(226,232,250,.4),320px 1120px 0 0 rgba(226,232,250,.5);
+    animation:twinkle 4.5s ease-in-out infinite alternate;
+  }
+  :root[data-theme="dark"] .stars::after{
+    width:3px;height:3px;
+    box-shadow:80px 120px 0 0 rgba(255,255,255,.9),320px 70px 0 0 rgba(255,255,255,.8),180px 230px 0 0 rgba(255,255,255,.85),396px 180px 0 0 rgba(255,255,255,.75),60px 480px 0 0 rgba(255,255,255,.85),270px 300px 0 0 rgba(255,255,255,.8),140px 700px 0 0 rgba(255,255,255,.85),380px 470px 0 0 rgba(255,255,255,.75),220px 860px 0 0 rgba(255,255,255,.85),40px 640px 0 0 rgba(255,255,255,.8),340px 1040px 0 0 rgba(255,255,255,.8),120px 300px 0 0 rgba(255,255,255,.9);
+    animation:twinkle 3.2s ease-in-out .8s infinite alternate;
+  }
+  @keyframes twinkle{from{opacity:.35}to{opacity:1}}
+  @media (prefers-reduced-motion: reduce){
+    :root[data-theme="dark"] .stars::before, :root[data-theme="dark"] .stars::after{animation:none!important;}
+  }
+
+  /* メーター=惑星＋軌道リング＋衛星 */
+  :root[data-theme="dark"] .meter .center{background:radial-gradient(circle at 35% 30%, #33255F 0%, #1D1440 55%, #110C28 100%);border-radius:50%;margin:15px;box-shadow:inset 0 0 18px rgba(0,0,0,.55), 0 0 20px rgba(139,92,246,.1);}
+  :root[data-theme="dark"] .meter .track{stroke-dasharray:1 6;}
+  .meter .moon{display:none;}
+  :root[data-theme="dark"] .meter .moon{display:block;fill:#F2F6FF;filter:drop-shadow(0 0 4px rgba(242,246,255,.9));}
+  :root[data-theme="dark"] .meter .prog-green{filter:drop-shadow(0 0 6px rgba(99,230,165,.65));}
+  :root[data-theme="dark"] .meter .prog-yellow{filter:drop-shadow(0 0 6px rgba(255,212,121,.6));}
+  :root[data-theme="dark"] .meter .prog-red{filter:drop-shadow(0 0 7px rgba(255,143,135,.7));}
+
+  /* ネオングロー（控えめ・文字コントラストは非依存） */
+  :root[data-theme="dark"] header .logo{text-shadow:0 0 14px rgba(244,114,182,.55);}
+  :root[data-theme="dark"] nav button.on{background:rgba(244,114,182,.14);box-shadow:0 0 14px rgba(167,139,250,.3);}
+  :root[data-theme="dark"] .z-green{box-shadow:0 0 10px rgba(99,230,165,.22);}
+  :root[data-theme="dark"] .z-yellow{box-shadow:0 0 10px rgba(255,212,121,.2);}
+  :root[data-theme="dark"] .z-red{box-shadow:0 0 12px rgba(255,143,135,.3);}
+  :root[data-theme="dark"] .share-card{box-shadow:0 0 26px rgba(139,92,246,.32);}
+  :root[data-theme="dark"] .theme-btn{box-shadow:0 2px 0 var(--btn-edge), 0 0 12px rgba(167,139,250,.3);}
+
+  /* 選定配色: 夜モード全体=④トライカラーMIX（ピンク→紫→青） */
+  :root[data-theme="dark"] .card{box-shadow:var(--shadow), 0 0 18px rgba(139,92,246,.12);}
+  :root[data-theme="dark"] .detail-actions button.primary,
+  :root[data-theme="dark"] .pro-cta,
+  :root[data-theme="dark"] .w-input button,
+  :root[data-theme="dark"] .pr-btn{background:linear-gradient(135deg,#FF5FA8 0%,#8B5CF6 50%,#38BDF8 100%);border:none;color:#fff;box-shadow:0 2px 0 var(--btn-edge), 0 0 18px rgba(139,92,246,.45);}
+  :root[data-theme="dark"] .detail-actions button.primary:active,
+  :root[data-theme="dark"] .pro-cta:active,
+  :root[data-theme="dark"] .w-input button:active,
+  :root[data-theme="dark"] .pr-btn:active{box-shadow:0 0 0 var(--btn-edge), 0 0 18px rgba(139,92,246,.45);}
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="stars" aria-hidden="true"></div>
+  <header>
+    <span class="logo">☀️ Bask</span>
+    <span class="tagline">今日も、だいじょうぶ。</span>
+    <span class="kari">名称仮</span>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="昼モード/夜モード切替" aria-label="昼モードと夜モードを切り替え">
+      <svg viewBox="0 0 48 48">
+        <defs>
+          <linearGradient id="dayg" gradientUnits="userSpaceOnUse" x1="24" y1="7" x2="24" y2="41">
+            <stop offset="0" stop-color="#FFF3C4"/><stop offset="1" stop-color="#FFD466"/>
+          </linearGradient>
+          <linearGradient id="nightg" gradientUnits="userSpaceOnUse" x1="24" y1="7" x2="24" y2="41">
+            <stop offset="0" stop-color="#2A3A6B"/><stop offset="1" stop-color="#0A0F1F"/>
+          </linearGradient>
+          <clipPath id="clipL"><rect x="0" y="0" width="24" height="48"/></clipPath>
+          <clipPath id="clipR"><rect x="24" y="0" width="24" height="48"/></clipPath>
+          <marker id="ah" viewBox="0 0 8 8" refX="5.5" refY="4" markerWidth="7" markerHeight="7" markerUnits="userSpaceOnUse" orient="auto">
+            <path class="ah" d="M0 0 L8 4 L0 8 z"/>
+          </marker>
+        </defs>
+        <g class="half-day" clip-path="url(#clipL)">
+          <circle cx="24" cy="24" r="17" fill="url(#dayg)"/>
+          <circle cx="15" cy="24" r="4.4" fill="#FF9D00"/>
+          <g stroke="#FF9D00" stroke-width="1.5" stroke-linecap="round">
+            <line x1="21.3" y1="24" x2="23.8" y2="24"/><line x1="19.5" y1="28.5" x2="21.2" y2="30.2"/>
+            <line x1="15" y1="30.3" x2="15" y2="32.8"/><line x1="10.5" y1="28.5" x2="8.8" y2="30.2"/>
+            <line x1="8.7" y1="24" x2="6.2" y2="24"/><line x1="10.5" y1="19.5" x2="8.8" y2="17.8"/>
+            <line x1="15" y1="17.7" x2="15" y2="15.2"/><line x1="19.5" y1="19.5" x2="21.2" y2="17.8"/>
+          </g>
+        </g>
+        <g class="half-night" clip-path="url(#clipR)">
+          <circle cx="24" cy="24" r="17" fill="url(#nightg)"/>
+          <circle cx="33.5" cy="23.5" r="5" fill="#F2F6FF"/>
+          <circle cx="35.6" cy="21.6" r="4.3" fill="url(#nightg)"/>
+          <g fill="#DCE6FF" opacity=".9">
+            <circle cx="28.5" cy="31.5" r=".9"/><circle cx="30.5" cy="14.5" r=".8"/>
+            <circle cx="27.5" cy="19.5" r=".65"/><circle cx="38" cy="31" r=".8"/>
+          </g>
+        </g>
+        <circle cx="24" cy="24" r="17" fill="none" stroke="rgba(128,128,148,.35)" stroke-width="1"/>
+        <line x1="24" y1="7.5" x2="24" y2="40.5" stroke="rgba(255,255,255,.45)" stroke-width="1"/>
+        <g class="cycle" fill="none" stroke-width="2.6" stroke-linecap="round">
+          <path d="M 7 16 A 19 19 0 0 1 41 16" marker-end="url(#ah)"/>
+          <path d="M 41 32 A 19 19 0 0 1 7 32" marker-end="url(#ah)"/>
+        </g>
+      </svg>
+    </button>
+  </header>
+  <div id="view"></div>
+  <div class="demo-note">これは操作できるデモ（プロトタイプ）です。データはこの端末内にのみ保存されます。</div>
+</div>
+
+<nav>
+  <button id="nav-home" class="on" onclick="go('home')">🏠<span>ホーム</span></button>
+  <button id="nav-minna" onclick="go('minna')">🌏<span>みんな</span></button>
+  <button id="nav-more" onclick="go('more')">☰<span>もっと</span></button>
+</nav>
+
+<div class="overlay" id="overlay"><div class="sheet" id="sheet"></div></div>
+<div id="toast"></div>
+
+<script>
+/* ============ データ ============ */
+const DAY = 86400000;
+const today = () => new Date();
+const iso = d => d.toISOString().slice(0,10);
+const daysAgoIso = n => iso(new Date(Date.now() - n*DAY));
+const fmt = s => { const d = new Date(s); return (d.getMonth()+1)+'/'+d.getDate(); };
+const daysSince = s => Math.floor((Date.now() - new Date(s+'T00:00').getTime()) / DAY);
+
+function seed(){
+  return {
+    pets:[
+      { id:'momo', name:'モモ', emoji:'🦎', sex:'♀', species:'ヒョウモントカゲモドキ', stage:'アダルト',
+        welcome: daysAgoIso(312), ageM: 14, feedInterval:3, grace:2.5, feedLabel:'コオロギMを2匹',
+        shedCycle:28, lastShed: daysAgoIso(24),
+        weights:[[60,48],[45,49],[30,50],[21,51],[14,52],[7,53],[2,54]].map(([n,g])=>({d:daysAgoIso(n),g})),
+        lastFeed: daysAgoIso(2), avgFeedGap:3.2, care:{} },
+      { id:'noa', name:'ノア', emoji:'🐍', sex:'♂', species:'コーンスネーク', stage:'アダルト',
+        welcome: daysAgoIso(540), ageM: 30, feedInterval:7, grace:3, feedLabel:'冷凍マウスMを1匹（解凍して）',
+        shedCycle:45, lastShed: daysAgoIso(12),
+        weights:[[90,410],[60,418],[30,425],[9,428]].map(([n,g])=>({d:daysAgoIso(n),g})),
+        lastFeed: daysAgoIso(9), avgFeedGap:7.4, care:{} },
+      { id:'sora', name:'ソラ', emoji:'🐉', sex:'♂', species:'フトアゴヒゲトカゲ', stage:'ヤング',
+        welcome: daysAgoIso(150), ageM: 8, feedInterval:1, grace:2, feedLabel:'野菜＋コオロギ（毎日）',
+        shedCycle:35, lastShed: daysAgoIso(31),
+        weights:[[60,180],[45,205],[30,235],[14,258],[7,262],[3,261]].map(([n,g])=>({d:daysAgoIso(n),g})),
+        lastFeed: daysAgoIso(3), avgFeedGap:1.2, care:{} }
+    ],
+    records:[
+      {p:'momo', t:'給餌', d:daysAgoIso(2)}, {p:'momo', t:'排泄', d:daysAgoIso(1)},
+      {p:'momo', t:'体重 54g', d:daysAgoIso(2)}, {p:'momo', t:'脱皮', d:daysAgoIso(24)},
+      {p:'noa', t:'給餌', d:daysAgoIso(9)}, {p:'noa', t:'脱皮', d:daysAgoIso(12)},
+      {p:'sora', t:'給餌', d:daysAgoIso(3)}, {p:'sora', t:'排泄', d:daysAgoIso(2)}, {p:'sora', t:'掃除', d:daysAgoIso(4)}
+    ],
+    stock:{ name:'コオロギ M', count:12, perDay:1.5 },
+    likes:{}
+  };
+}
+let S;
+try{ S = JSON.parse(localStorage.getItem('bask_proto_v1')) || seed(); }catch(e){ S = seed(); }
+const save = () => localStorage.setItem('bask_proto_v1', JSON.stringify(S));
+
+/* ============ 判定ロジック（デモ用の仮基準） ============ */
+function statusOf(p){
+  const days = daysSince(p.lastFeed);
+  const ratio = days / p.feedInterval;
+  let zone='green', msg=`普通の範囲です（${p.species}・${p.stage}・夏の基準）`;
+  if(ratio > p.grace){ zone='red'; msg='受診を検討する目安です。拒食ケアを開きましょう'; }
+  else if(ratio > 1.0){ zone='yellow'; msg='そろそろ注意。今日、体重を測ってみましょう'; }
+  return {days, ratio, zone, msg};
+}
+const zoneColor = z => z==='green' ? 'var(--green)' : z==='yellow' ? 'var(--yellow)' : 'var(--red)';
+
+function ringSVG(p, size){
+  const st = statusOf(p);
+  const r = size/2 - 7, c = 2*Math.PI*r;
+  const frac = Math.min(st.days / (p.feedInterval * p.grace), 1);
+  const ang = 2 * Math.PI * frac;
+  const mx = size/2 + r * Math.cos(ang), my = size/2 + r * Math.sin(ang);
+  return `<div class="meter" style="width:${size}px;height:${size}px">
+    <svg width="${size}" height="${size}">
+      <circle class="track" cx="${size/2}" cy="${size/2}" r="${r}" fill="none" style="stroke:var(--track)" stroke-width="9"/>
+      <circle class="prog prog-${st.zone}" cx="${size/2}" cy="${size/2}" r="${r}" fill="none" style="stroke:${zoneColor(st.zone)}" stroke-width="9"
+        stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c*(1-frac)}"/>
+      <circle class="moon" cx="${mx}" cy="${my}" r="3.2"/>
+    </svg>
+    <div class="center"><span class="days" style="font-size:${size*0.21}px">${st.days}日</span><span class="lbl">前回の給餌から</span></div>
+  </div>`;
+}
+
+/* ============ 画面遷移 ============ */
+const view = document.getElementById('view');
+function go(tab){
+  ['home','minna','more'].forEach(t=>document.getElementById('nav-'+t).classList.toggle('on', t===tab));
+  if(tab==='home') renderHome();
+  if(tab==='minna') renderMinna();
+  if(tab==='more') renderMore();
+  window.scrollTo(0,0);
+}
+
+/* ============ ホーム ============ */
+function renderHome(){
+  const stockDays = Math.floor(S.stock.count / S.stock.perDay);
+  view.innerHTML = `
+    <div class="season">🌡️<div><b>7月のワンポイント</b>冷房の直風がケージに当たっていませんか？夏でも夜間の冷えすぎに注意。</div></div>
+    <div class="section-title">うちの子たち（大丈夫メーター）</div>
+    ${S.pets.map(p=>{
+      const st = statusOf(p);
+      return `<div class="card">
+        <div class="pet-card" onclick="openPet('${p.id}')">
+          ${ringSVG(p,92)}
+          <div class="pet-info">
+            <div class="pet-name">${p.emoji} ${p.name} <small style="font-weight:400;color:var(--sub)">${p.sex}</small></div>
+            <div class="pet-species">${p.species}・${p.stage}（給餌目安 ${p.feedInterval===1?'毎日':p.feedInterval+'日おき'}）</div>
+            <span class="status-chip z-${st.zone}">${st.zone==='green'?'😌 だいじょうぶ':st.zone==='yellow'?'🤔 そろそろ注意':'🚨 受診の目安'}</span>
+          </div>
+          <span class="card-arw">›</span>
+        </div>
+        <div class="quick">
+          <button onclick="rec('${p.id}','給餌')">🍴<span>給餌</span></button>
+          <button onclick="rec('${p.id}','排泄')">💩<span>排泄</span></button>
+          <button onclick="rec('${p.id}','脱皮')">✨<span>脱皮</span></button>
+          <button onclick="openWeight('${p.id}')">⚖️<span>体重</span></button>
+          <button onclick="rec('${p.id}','掃除')">🧹<span>掃除</span></button>
+        </div>
+      </div>`;
+    }).join('')}
+    <button class="add-pet" onclick="openPro()">＋ 新しい子を登録（無料はあと0匹）</button>
+    <div class="section-title">餌在庫ウォッチ</div>
+    <div class="card">
+      <div class="stock-row">
+        <div class="stock-icon">🦗</div>
+        <div class="stock-main">
+          <b>${S.stock.name} … 残り約${S.stock.count}匹</b> <span class="stock-days">→ あと約${stockDays}日</span>
+          <div class="stock-bar"><i style="width:${Math.min(stockDays/14*100,100)}%"></i></div>
+        </div>
+        <button class="pr-btn" onclick="toast('通販ページを開きます（デモ）')">補充する</button>
+      </div>
+      <div class="pr-note">※補充リンクは広告を含みます【#PR】</div>
+    </div>`;
+}
+
+/* ============ 記録 ============ */
+function rec(pid, type){
+  const p = S.pets.find(x=>x.id===pid);
+  const t = iso(today());
+  S.records.unshift({p:pid, t:type, d:t});
+  if(type==='給餌'){ p.lastFeed = t; S.stock.count = Math.max(0, S.stock.count-2); }
+  if(type==='脱皮'){ p.lastShed = t; }
+  save();
+  toast(`${p.name}の「${type}」を記録しました`);
+  renderHome();
+  event && event.stopPropagation();
+}
+function openWeight(pid){
+  event && event.stopPropagation();
+  const p = S.pets.find(x=>x.id===pid);
+  const last = p.weights[p.weights.length-1].g;
+  sheet(`<div class="sheet-head"><b>⚖️ ${p.name}の体重を記録</b><button class="x" onclick="closeSheet()">✕</button></div>
+    <div class="w-input"><input id="w-val" type="number" value="${last}" inputmode="decimal"><span>g</span>
+    <button onclick="saveWeight('${pid}')">保存</button></div>
+    <div class="disclaimer">前回: ${last}g（${fmt(p.weights[p.weights.length-1].d)}）。週1回の計測がおすすめです。</div>`);
+}
+function saveWeight(pid){
+  const v = parseFloat(document.getElementById('w-val').value);
+  if(!v){ toast('数字を入れてください'); return; }
+  const p = S.pets.find(x=>x.id===pid);
+  p.weights.push({d:iso(today()), g:v});
+  S.records.unshift({p:pid, t:'体重 '+v+'g', d:iso(today())});
+  save(); closeSheet(); toast(`${p.name}の体重 ${v}g を記録しました`); renderHome();
+}
+
+/* ============ 個体詳細 ============ */
+function weightChart(p){
+  const W=300, H=110, pad=24;
+  const ws = p.weights.slice(-8);
+  const min = Math.min(...ws.map(w=>w.g)), max = Math.max(...ws.map(w=>w.g));
+  const span = (max-min)||1;
+  const pts = ws.map((w,i)=>{
+    const x = pad + i*(W-pad*2)/Math.max(ws.length-1,1);
+    const y = H-18 - (w.g-min)/span*(H-40);
+    return {x,y,g:w.g,d:w.d};
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%">
+    <polyline fill="none" style="stroke:var(--accent)" stroke-width="2.5" points="${pts.map(p=>p.x+','+p.y).join(' ')}"/>
+    ${pts.map(pt=>`<circle cx="${pt.x}" cy="${pt.y}" r="3.5" style="fill:var(--accent)"/>`).join('')}
+    ${pts.map((pt,i)=> i%2===0||i===pts.length-1 ? `<text x="${pt.x}" y="${pt.y-8}" font-size="10" text-anchor="middle" style="fill:var(--sub)">${pt.g}g</text>`:'').join('')}
+    ${pts.map((pt,i)=> i%2===0||i===pts.length-1 ? `<text x="${pt.x}" y="${H-4}" font-size="9" text-anchor="middle" style="fill:var(--sub);opacity:.75">${fmt(pt.d)}</text>`:'').join('')}
+  </svg>`;
+}
+function humanAge(p){
+  const table = {'ヒョウモントカゲモドキ':1.9,'コーンスネーク':1.5,'フトアゴヒゲトカゲ':2.4};
+  return Math.round(p.ageM * (table[p.species]||2));
+}
+function openPet(pid){
+  const p = S.pets.find(x=>x.id===pid);
+  const st = statusOf(p);
+  const shedDays = daysSince(p.lastShed);
+  const shedRemain = p.shedCycle - shedDays;
+  const wDiff = p.weights[p.weights.length-1].g - p.weights[0].g;
+  const recs = S.records.filter(r=>r.p===pid).slice(0,6);
+  const careItems = ['餌のサイズを1段階小さくしてみる','嗜好性の高い餌（ハニーワーム等）を試す','ケージ温度が26〜32℃か確認する','隠れ家・周囲の騒音などストレス要因を確認','体重が10%減ったら受診する'];
+  sheet(`
+    <div class="sheet-head"><b>${p.emoji} ${p.name}</b><button class="x" onclick="closeSheet()">✕</button></div>
+    <div class="big-meter">${ringSVG(p,140)}
+      <div class="zone-legend"><span><i style="background:var(--green)"></i>だいじょうぶ</span><span><i style="background:var(--yellow)"></i>そろそろ注意</span><span><i style="background:var(--red)"></i>受診の目安</span></div>
+    </div>
+    <div class="status-big z-${st.zone}">${st.zone==='green'?'😌':st.zone==='yellow'?'🤔':'🚨'} <b>${st.msg}</b><br>
+    <small>デモ用の仮基準です。正式版では飼育書・獣医監修の基準値を使います。</small></div>
+    <div class="minna-box">🌏 <b>みんなのデータ</b><span class="minna-tag">構想</span><br>
+      同じ「${p.species}・${p.stage}・夏」のみんなの給餌間隔は <b>平均${(p.feedInterval*1.15).toFixed(1)}日</b>、
+      絶食の最長は <b>中央値${Math.round(p.feedInterval*p.grace*0.8)}日</b>でした。${p.name}は${st.days}日目 → <b>${st.zone==='green'?'みんなの普通の範囲内です':st.zone==='yellow'?'平均よりやや長め。体重チェックを':'みんなの範囲を超えています'}</b>
+      <br><small style="color:var(--sub)">※デモの数値です。正式版では会員の匿名データから算出します。</small></div>
+    ${st.zone!=='green' ? `<div class="care-list"><h4>🍽️ 拒食ケアチェックリスト</h4>
+      ${careItems.map((c,i)=>`<div class="care-item ${p.care[i]?'done':''}" onclick="toggleCare('${pid}',${i})"><span class="cb">${p.care[i]?'✓':''}</span>${c}</div>`).join('')}
+    </div>`:''}
+    <div class="chart-wrap"><h4>⚖️ 体重の推移</h4>${weightChart(p)}
+      <div class="chart-meta">この${Math.round(daysSince(p.weights[0].d)/30)}ヶ月で <b style="color:${wDiff>=0?'var(--green)':'var(--red)'}">${wDiff>=0?'+':''}${wDiff}g</b>。${wDiff>=0?'順調に成長しています':'減少傾向です。給餌と温度を見直しましょう'}</div>
+    </div>
+    <div class="shed-wrap"><h4>✨ 脱皮予報</h4>
+      前回の脱皮から <b>${shedDays}日</b>（この子の周期: 約${p.shedCycle}日）<br>
+      ${shedRemain<=5 ? `<span class="shed-badge">そろそろ白濁の予想 → 湿度を上げておきましょう</span>` : `<span class="shed-badge">次の脱皮まで あと約${shedRemain}日の予想</span>`}
+      <br><small style="color:var(--sub)">脱皮後は指先・しっぽの皮の残りをチェック（脱皮不全の予防）</small></div>
+    <div class="chart-wrap"><h4>📖 おもいで</h4>
+      <div style="font-size:13px;line-height:1.8">お迎えから <b style="color:var(--accent)">${daysSince(p.welcome)}日</b>。人間でいうと約<b>${humanAge(p)}歳</b>です。</div>
+    </div>
+    <div class="detail-actions">
+      <button class="primary vet-btn" onclick="openVet('${pid}')">🏥 獣医パスを作る</button>
+      <button onclick="openHandover('${pid}')">🧳 引き継ぎカード</button>
+      <button onclick="openGrowth('${pid}')">📸 成長アルバム</button>
+      <button onclick="closeSheet();go('minna')">🌏 みんなと比べる</button>
+    </div>
+    <div class="hist"><h4>最近の記録</h4>
+      ${recs.map(r=>`<div class="hist-row"><span class="d">${fmt(r.d)}</span><span>${r.t}</span></div>`).join('') || '<div style="font-size:12px;color:var(--sub)">まだ記録がありません</div>'}
+    </div>`);
+}
+function toggleCare(pid,i){
+  const p = S.pets.find(x=>x.id===pid);
+  p.care[i] = !p.care[i]; save(); openPet(pid);
+}
+
+/* ============ 獣医パス ============ */
+function openVet(pid){
+  const p = S.pets.find(x=>x.id===pid);
+  const st = statusOf(p);
+  const ws = p.weights.slice(-5);
+  const wTrend = ws[ws.length-1].g - ws[0].g;
+  const cnt = t => S.records.filter(r=>r.p===pid && r.t.startsWith(t)).length;
+  const lastPoo = S.records.find(r=>r.p===pid && r.t==='排泄');
+  sheet(`
+    <div class="sheet-head"><b>🏥 獣医パス</b><button class="x" onclick="closeSheet()">✕</button></div>
+    <div class="disclaimer" style="font-size:12px;color:var(--ink)">この画面をそのまま獣医師にお見せください。問診がスムーズになります。</div>
+    <div class="vet-card">
+      <div class="vc-head">${p.emoji} ${p.name}（${p.species}・${p.stage}・${p.sex}） 直近30日サマリー</div>
+      <table>
+        <tr><td>最終給餌</td><td><b>${fmt(p.lastFeed)}（${st.days}日前）</b> 内容: ${p.feedLabel}</td></tr>
+        <tr><td>給餌ペース</td><td>平均 ${p.avgFeedGap}日間隔（この子の通常: ${p.feedInterval===1?'毎日':p.feedInterval+'日おき'}）</td></tr>
+        <tr><td>体重推移</td><td>${ws.map(w=>w.g+'g').join(' → ')}（<b class="${wTrend>=0?'up':''}" style="color:${wTrend>=0?'var(--green)':'var(--red)'}">${wTrend>=0?'+':''}${wTrend}g</b>）</td></tr>
+        <tr><td>排泄</td><td>直近30日で ${cnt('排泄')}回（最終: ${lastPoo ? fmt(lastPoo.d) : '記録なし'}）</td></tr>
+        <tr><td>脱皮</td><td>最終 ${fmt(p.lastShed)}（周期 約${p.shedCycle}日）</td></tr>
+        <tr><td>環境</td><td>ケージ内 26〜31℃・湿度40〜60%（手入力メモ）</td></tr>
+        <tr><td>気になること</td><td>${st.zone!=='green'?'給餌間隔が通常の'+st.ratio.toFixed(1)+'倍に延びている':'特記なし'}</td></tr>
+      </table>
+    </div>
+    <div class="detail-actions">
+      <button class="primary" onclick="toast('PDFに保存しました（デモ）')">PDFで保存（Pro）</button>
+      <button onclick="openHospitals()">近くの爬虫類対応病院</button>
+    </div>
+    <div class="disclaimer">※本アプリは診断を行いません。数値の記録と整理のみを行い、判断は獣医師にお任せください。</div>`);
+}
+function openHospitals(){
+  sheet(`
+    <div class="sheet-head"><b>🏥 爬虫類対応病院をさがす</b><button class="x" onclick="closeSheet()">✕</button></div>
+    <div class="disclaimer" style="font-size:12px;color:var(--ink)">爬虫類を診られる病院は多くありません（東京54件・神奈川31件・大阪24件※）。事前に電話確認を。</div>
+    <div class="hosp"><b>〇〇エキゾチックアニマル病院</b><span>東京都△△区・爬虫類◎・要予約（デモ表示）</span></div>
+    <div class="hosp"><b>△△動物病院</b><span>東京都□□市・爬虫類○・日曜休（デモ表示）</span></div>
+    <div class="hosp"><b>□□バードアンドレプタイルクリニック</b><span>神奈川県・爬虫類◎（デモ表示）</span></div>
+    <div class="disclaimer">※件数はEPARKペットライフ掲載数（2026年7月時点の調査）。正式版では現在地から検索できます。</div>`);
+}
+
+/* ============ 引き継ぎカード ============ */
+function fakeQR(){
+  let cells='';
+  const finder = (r,c) => (r<3&&c<3)||(r<3&&c>13)||(r>13&&c<3);
+  let k=7;
+  for(let r=0;r<17;r++)for(let c=0;c<17;c++){
+    k = (k*31+17)%97;
+    const on = finder(r,c) ? ((r%3===1&&c%3===1)||r===0||r===2||c===0||c===2||r===16||r===14||c===16||c===14) : (k%5<2);
+    cells += on?'<i></i>':'<s style="display:block"></s>';
+  }
+  return `<div class="qr">${cells}</div>`;
+}
+function openHandover(pid){
+  const p = S.pets.find(x=>x.id===pid);
+  sheet(`
+    <div class="sheet-head"><b>🧳 お世話引き継ぎカード</b><button class="x" onclick="closeSheet()">✕</button></div>
+    <div class="trip-judge">
+      <div class="row"><b>旅行の予定は？</b><input id="trip-n" type="number" value="4" min="1" max="30" onchange="judgeTrip('${pid}')"> 泊</div>
+      <div class="trip-result" id="trip-result"></div>
+    </div>
+    <div class="ho-card" id="ho-card">
+      <h3>${p.emoji} ${p.name}のトリセツ</h3>
+      <div style="font-size:11px;color:var(--sub);margin:2px 0 10px">${p.species}・${p.stage}・${p.sex}（お迎えから${daysSince(p.welcome)}日）</div>
+      <div class="ho-item"><span class="ic">🍴</span><div><b>ごはん:</b> ${p.feedInterval===1?'毎日':p.feedInterval+'日おき'}に${p.feedLabel}。<b>次回は ${fmt(new Date(new Date(p.lastFeed).getTime()+p.feedInterval*DAY))} 頃</b>。食べなくても慌てないで。</div></div>
+      <div class="ho-item"><span class="ic">💧</span><div><b>お水:</b> 毎日交換。水入れはケージ左奥。</div></div>
+      <div class="ho-item"><span class="ic">🌡️</span><div><b>温度:</b> 26〜32℃をキープ。エアコンはつけたままで。</div></div>
+      <div class="ho-item"><span class="ic">🙅</span><div><b>さわらないで:</b> 見るだけでOK。脱走にだけ注意。</div></div>
+      <div class="ho-item"><span class="ic">📞</span><div><b>困ったら:</b> わたしの携帯へ。元気な時の写真はこのカードの下に。</div></div>
+      ${fakeQR()}
+      <div class="qr-note">家族・預け先のスマホでこのカードを開けます（デモ）</div>
+    </div>
+    <div class="detail-actions">
+      <button class="primary" onclick="toast('共有リンクをコピーしました（デモ）')">家族に共有する</button>
+      <button onclick="toast('画像として保存しました（デモ）')">画像で保存</button>
+    </div>`);
+  judgeTrip(pid);
+}
+function judgeTrip(pid){
+  const p = S.pets.find(x=>x.id===pid);
+  const n = parseInt(document.getElementById('trip-n').value)||4;
+  const el = document.getElementById('trip-result');
+  let ok, msg;
+  if(p.species==='フトアゴヒゲトカゲ' && p.stage!=='ベビー'){ ok = n<=5; msg = ok?`${n}泊なら<b>餌なしで大丈夫</b>。出発前に給餌＋水の交換だけ家族にお願いしましょう。`:`${n}泊は長め。中日に1回、野菜だけお願いするのが安心です。`; }
+  else if(p.species==='ヒョウモントカゲモドキ'){ ok = n<=7; msg = ok?`${n}泊なら<b>餌なしで大丈夫</b>（しっぽに栄養を蓄えています）。水の交換だけお願いしましょう。`:`${n}泊は長め。中日に1回の給餌をお願いしましょう。`; }
+  else { ok = n<=10; msg = ok?`${n}泊なら<b>餌は不要</b>。ヘビは絶食に強い種類です。水だけ切らさないように。`:`${n}泊なら出発直前の給餌＋水の管理をお願いしましょう。`; }
+  el.style.background = ok?'var(--green-bg)':'var(--yellow-bg)';
+  el.innerHTML = (ok?'😌 ':'🤔 ')+msg+`<br><small style="color:var(--sub)">※種別・成長段階からの目安（デモ）。正式版は監修基準を使います。</small>`;
+}
+
+/* ============ 成長アルバム ============ */
+function openGrowth(pid){
+  const p = S.pets.find(x=>x.id===pid);
+  const days = daysSince(p.welcome);
+  sheet(`
+    <div class="sheet-head"><b>📸 ${p.name}の成長アルバム</b><button class="x" onclick="closeSheet()">✕</button></div>
+    <div class="ghost-demo">
+      <div class="frame"><span class="g1">${p.emoji}</span><span class="g2">${p.emoji}</span></div>
+      <p><b>ゴースト重ね撮り:</b> 前回の写真をうっすら重ねて表示するので、いつも同じ角度で撮れます。毎日見ていると気づけない成長が、比べるとわかります。（デモ）</p>
+    </div>
+    <div class="share-card">
+      <span class="em">${p.emoji}</span>
+      <h3>${p.name}との毎日</h3>
+      <p>お迎えから <b style="font-size:18px">${days}日</b> ／ 体重 ${p.weights[0].g}g → ${p.weights[p.weights.length-1].g}g<br>人間でいうと約${humanAge(p)}歳になりました</p>
+      <span class="wm">☀️ Baskで記録中</span>
+    </div>
+    <div class="detail-actions">
+      <button class="primary" onclick="makeShareImage('${pid}')">📸 シェア画像を保存（本物）</button>
+      <button onclick="makeShareImage('${pid}')">アルバムに保存</button>
+    </div>
+    <div class="disclaimer">実際に画像（PNG）が生成されます。「Baskで記録中」の透かしが、広告費ゼロの入り口になります。</div>`);
+}
+
+/* ============ みんなタブ ============ */
+function renderMinna(){
+  const p = S.pets[0];
+  const likes = S.likes;
+  const posts = [
+    {id:'a', av:'🦎', nm:'まろん（レオパ・♀）', tx:'お迎えから100日！今日も無事に脱皮できました✨', n:24},
+    {id:'b', av:'🐉', nm:'ぐりこ（フトアゴ・♂)', tx:'初めての野菜、豆苗をぱくり。記念日です。', n:31},
+    {id:'c', av:'🐍', nm:'しろたん（コーン・♂）', tx:'絶食3週間から復活！みんなのデータに励まされました。', n:57}
+  ];
+  view.innerHTML = `
+    <div class="section-title">うちの子、普通？</div>
+    <div class="compare-card">
+      <h3>⚖️ ${p.emoji} ${p.name}（${p.ageM}ヶ月）の体格</h3>
+      <div class="cmp-row">
+        <div class="lbl"><span>やせ気味</span><span>みんなの中央値 52g</span><span>ぽっちゃり</span></div>
+        <div class="cmp-bar"><span class="avg"></span><span class="me" style="left:57%">${p.emoji}</span></div>
+      </div>
+      <div class="cmp-note">同じ月齢のヒョウモントカゲモドキ（みんなのデータ）と比べて <b style="color:var(--green)">+2g・ちょうど良い体格ゾーン</b>です。😌<br>
+      <small>※デモの数値です。正式版は会員の匿名データから算出。個体情報は共有されません。</small></div>
+    </div>
+    <div class="section-title">みんなの絶食データ<span style="font-size:10px">🔒 匿名・自動集計</span></div>
+    <div class="compare-card">
+      <div style="font-size:13px;line-height:1.9">この夏、レオパの絶食日数は<br><b style="font-size:17px;color:var(--accent)">平均3.4日・最長でも中央値6日</b><br>
+      <span style="font-size:11px;color:var(--sub)">「うちだけ？」の不安に、みんなの記録が答えます。会員が増えるほど正確になる、このアプリだけのデータです。（デモ）</span></div>
+    </div>
+    <div class="section-title">みんなのようす<span style="font-size:10px">いいねだけ・コメントなし</span></div>
+    <div class="compare-card">
+      ${posts.map(po=>`<div class="feed-post"><span class="av">${po.av}</span><div class="bd"><div class="nm">${po.nm}</div>${po.tx}</div>
+        <button class="like" onclick="like('${po.id}',${po.n})">❤️ ${po.n + (likes[po.id]||0)}</button></div>`).join('')}
+      <div class="no-comment">💡 このフィードには<b>コメント・DM機能がありません</b>。売買の勧誘やマウントが起きない、安心して眺められる場所として設計しています。</div>
+    </div>`;
+}
+function like(id, n){
+  S.likes[id] = S.likes[id] ? 0 : 1; save(); renderMinna();
+}
+
+/* ============ もっとタブ ============ */
+function renderMore(){
+  view.innerHTML = `
+    <div class="section-title">そなえる</div>
+    <div class="more-item" onclick="openBlackout()"><span class="ic">⚡</span><div>停電サバイバルモード<span class="sub">オフラインで開ける緊急ガイド（無料開放）</span></div><span class="arw">›</span></div>
+    <div class="more-item" onclick="openHospitals()"><span class="ic">🏥</span><div>爬虫類対応病院をさがす<span class="sub">数が少ないからこそ、事前にチェック</span></div><span class="arw">›</span></div>
+    <div class="section-title">つかう</div>
+    <div class="more-item" onclick="openVet('${S.pets[0].id}')"><span class="ic">📋</span><div>獣医パス<span class="sub">受診用サマリーをワンタップ生成</span></div><span class="arw">›</span></div>
+    <div class="more-item" onclick="openHandover('${S.pets[0].id}')"><span class="ic">🧳</span><div>お世話引き継ぎカード<span class="sub">旅行・帰省のときの「うちの子のトリセツ」</span></div><span class="arw">›</span></div>
+    <div class="more-item" onclick="go('home')"><span class="ic">🦗</span><div>餌在庫ウォッチ<span class="sub">餌切れ予報と補充リンク【#PR】</span></div><span class="arw">›</span></div>
+    <div class="section-title">Bask Pro</div>
+    <div class="more-item" onclick="openPro()"><span class="ic">⭐</span><div>Proのご案内<span class="sub">月300円で4匹目から＆獣医パスPDFなど</span></div><span class="arw">›</span></div>
+    <div class="section-title">その他</div>
+    <div class="more-item" onclick="if(confirm('デモデータを最初の状態に戻しますか？')){localStorage.removeItem('bask_proto_v1');location.reload();}"><span class="ic">🔄</span><div>デモデータをリセット</div><span class="arw">›</span></div>
+    <div class="more-item" onclick="openAbout()"><span class="ic">ℹ️</span><div>このアプリについて<span class="sub">免責・広告表記の方針</span></div><span class="arw">›</span></div>`;
+}
+function openBlackout(){
+  document.getElementById('overlay').classList.add('blackout');
+  sheet(`
+    <div class="sheet-head"><b>⚡ 停電サバイバルモード</b><button class="x" onclick="closeSheet()">✕</button></div>
+    <div class="bo-offline">📵 この画面は電波がなくても開けます（デモ）</div>
+    <div class="bo-step"><b>STEP 1 — あわてない</b>健康な爬虫類は半日〜1日の温度低下には耐えられます。まず深呼吸。</div>
+    <div class="bo-step"><b>STEP 2 — 保温は「一点集中」</b>部屋全体ではなく、ケージ1ヶ所を暖める。毛布・断熱材でケージを包み、熱を逃さない。</div>
+    <div class="bo-step"><b>STEP 3 — カイロはタオル越しに</b>使い捨てカイロはケージの外側・タオル越しに。直接触れると低温やけどの危険。酸欠防止に密閉しない。</div>
+    <div class="bo-step"><b>STEP 4 — 長引くなら車内避難</b>車の暖房が使えるなら、プラケースに移して車内へ。</div>
+    <div class="bo-quote">「電気ガス水道が使えず、車にフトアゴ・ベルツノ・コーンスネークを避難させ、暖房で停電復活まで乗り切りました」— 東日本大震災時の飼育者の実体験（Yahoo!知恵袋より）</div>
+    <div class="bo-step"><b>優先順位</b>ベビー・小型種・病中の子から先に保温。成体のヘビは絶食・低温に比較的強い。</div>
+    <div class="bo-step"><b>避難時の持ち物</b>プラケース／カイロ／霧吹き／タオル／この子の写真（脱走時の捜索用）</div>`);
+}
+function openAbout(){
+  sheet(`
+    <div class="sheet-head"><b>ℹ️ このアプリについて</b><button class="x" onclick="closeSheet()">✕</button></div>
+    <div class="disclaimer" style="font-size:12px;line-height:2">
+    ・本アプリは飼育記録の整理を行うものであり、<b>診断・医療行為は行いません</b>。体調の判断は必ず獣医師にご相談ください。<br>
+    ・「大丈夫メーター」等の基準値は一般的な飼育情報に基づく目安です。正式版では専門家監修を予定しています。<br>
+    ・餌の補充リンク等、広告を含む導線には<b>【#PR】</b>を明記します。<br>
+    ・みんなのデータは匿名・統計値のみを使用し、個体・個人を特定できる情報は共有されません。<br>
+    ・生体の売買・譲渡に関わる機能は搭載しません。</div>`);
+}
+
+/* ============ Pro ============ */
+function openPro(){
+  sheet(`
+    <div class="sheet-head"><b>⭐ Bask Pro</b><button class="x" onclick="closeSheet()">✕</button></div>
+    <div class="pro-hero">
+      <h3>無料プランは3匹まで</h3>
+      <div class="price">月300円<small> で、ぜんぶの子を。</small></div>
+      <div style="font-size:11px;opacity:.85">多頭飼いのあなたのためのプランです。いつでも解約OK。</div>
+    </div>
+    <div class="pro-feat">
+      <div>🦎 <span><b>登録数 無制限</b> — 4匹目からはProで</span></div>
+      <div>📋 <span><b>獣医パスのPDF保存</b> — 印刷して持参できます</span></div>
+      <div>🌏 <span><b>みんなのデータ比較の詳細版</b> — 体重・絶食・脱皮周期</span></div>
+      <div>🔔 <span><b>給餌リマインド通知</b> — 正式アプリ版で提供予定</span></div>
+      <div>🌡️ <span><b>SwitchBot温湿度計 連携</b> — 準備中。ケージ温度を自動記録</span></div>
+    </div>
+    <button class="pro-cta" onclick="toast('デモのため登録はできません 🙏')">Proをはじめる（デモ）</button>
+    <div class="disclaimer">プロトタイプのため実際の課金はありません。</div>`);
+}
+
+/* ============ シェア画像の生成（Canvas・本実装） ============ */
+function renderShareCanvas(pid){
+  const p = S.pets.find(x=>x.id===pid);
+  const days = daysSince(p.welcome);
+  const c = document.createElement('canvas'); c.width = 1080; c.height = 1350; /* Instagram 4:5 */
+  const g = c.getContext('2d');
+  const grad = g.createLinearGradient(0, 0, 1080, 1350);
+  grad.addColorStop(0, '#2E5D42'); grad.addColorStop(0.55, '#3E7C4F'); grad.addColorStop(1, '#7BA05B');
+  g.fillStyle = grad; g.fillRect(0, 0, 1080, 1350);
+  g.fillStyle = 'rgba(255,255,255,0.08)';
+  g.beginPath(); g.arc(920, 160, 280, 0, 7); g.fill();
+  g.beginPath(); g.arc(100, 1220, 220, 0, 7); g.fill();
+  /* 星をちりばめる（プラネット感） */
+  g.save();
+  let sd = 9;
+  for(let i = 0; i < 42; i++){
+    sd = (sd * 137 + 29) % 1000; const sx = (sd / 1000) * 1080;
+    sd = (sd * 137 + 29) % 1000; const sy = (sd / 1000) * 1350;
+    sd = (sd * 137 + 29) % 1000; const sr = 1 + (sd / 1000) * 2.4;
+    g.globalAlpha = 0.2 + (sd % 55) / 100;
+    g.fillStyle = '#FFFFFF';
+    g.beginPath(); g.arc(sx, sy, sr, 0, 7); g.fill();
+  }
+  g.restore();
+  g.textAlign = 'center';
+  g.font = '250px "Segoe UI Emoji", serif';
+  g.fillText(p.emoji, 540, 460);
+  g.fillStyle = '#FFFFFF';
+  g.font = 'bold 88px "Yu Gothic UI", "Hiragino Kaku Gothic ProN", sans-serif';
+  g.fillText(`${p.name}との毎日`, 540, 640);
+  g.globalAlpha = 0.9;
+  g.font = '46px "Yu Gothic UI", sans-serif';
+  g.fillText('お迎えから', 540, 740);
+  g.globalAlpha = 1;
+  g.font = 'bold 210px "Segoe UI", sans-serif';
+  g.fillText(`${days}日`, 540, 950);
+  g.globalAlpha = 0.9;
+  g.font = '42px "Yu Gothic UI", sans-serif';
+  g.fillText(`体重 ${p.weights[0].g}g → ${p.weights[p.weights.length-1].g}g ／ 人間でいうと約${humanAge(p)}歳`, 540, 1050);
+  g.globalAlpha = 0.85;
+  g.font = 'bold 40px "Yu Gothic UI", sans-serif';
+  g.fillText('☀️ Bask で記録中', 540, 1265);
+  return c.toDataURL('image/png');
+}
+function makeShareImage(pid){
+  const p = S.pets.find(x=>x.id===pid);
+  const url = renderShareCanvas(pid);
+  const a = document.createElement('a');
+  a.download = `bask_${p.name}_${daysSince(p.welcome)}days.png`;
+  a.href = url; a.click();
+  toast('シェア画像（PNG）を保存しました 📸');
+}
+
+/* ============ 共通UI ============ */
+function sheet(html){
+  document.getElementById('sheet').innerHTML = html;
+  document.getElementById('overlay').classList.add('show');
+}
+function closeSheet(){
+  const ov = document.getElementById('overlay');
+  ov.classList.remove('show'); ov.classList.remove('blackout');
+}
+document.getElementById('overlay').addEventListener('click', e=>{ if(e.target.id==='overlay') closeSheet(); });
+let toastTimer;
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+/* ============ テーマ切替（ライト/ダーク） ============ */
+function applyTheme(t){
+  document.documentElement.dataset.theme = t;
+  localStorage.setItem('bask_theme', t);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if(meta) meta.setAttribute('content', t==='dark' ? '#0E0A22' : '#3E7C4F');
+}
+function toggleTheme(){
+  const next = document.documentElement.dataset.theme==='dark' ? 'light' : 'dark';
+  const btn = document.getElementById('theme-btn');
+  if(btn) btn.classList.toggle('spin');
+  applyTheme(next);
+  toast(next==='dark' ? 'プラネットモード（夜） 🪐' : 'デイモード（昼） ☀️');
+}
+applyTheme(localStorage.getItem('bask_theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+
+go('home');
+
+/* ============ PWA登録（http/https配信時のみ有効） ============ */
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
